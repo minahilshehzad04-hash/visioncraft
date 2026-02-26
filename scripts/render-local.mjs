@@ -69,11 +69,11 @@ async function renderNextVideo() {
     }
 
     const inputProps = {
-        images: video.image_urls,
-        captions: video.captions,
-        voiceUrl: video.voice_url,
+        images: video.image_urls || [],
+        captions: video.captions || [],
+        voiceUrl: video.voice_url || "",
         captionStyleId: video.caption_style || "pop",
-        durationInSeconds: video.video_series.duration,
+        durationInSeconds: Number(video.video_series?.duration) || 30,
     };
 
     console.log("📦 Bundling video...");

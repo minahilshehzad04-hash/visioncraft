@@ -24,8 +24,9 @@ export const RemotionRoot: React.FC = () => {
                 }}
                 calculateMetadata={({ props }) => {
                     const p = props as unknown as VideoCompositionProps;
+                    const durationInSeconds = Number(p.durationInSeconds) || 30;
                     return {
-                        durationInFrames: Math.ceil(p.durationInSeconds * FPS),
+                        durationInFrames: Math.ceil(durationInSeconds * FPS),
                     };
                 }}
             />

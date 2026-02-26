@@ -74,7 +74,8 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
     durationInSeconds,
 }) => {
     const { fps } = useVideoConfig();
-    const totalFrames = Math.ceil(durationInSeconds * fps);
+    const safeDuration = Number(durationInSeconds) || 30;
+    const totalFrames = Math.ceil(safeDuration * fps);
     const sceneCount = images.length;
     const framesPerScene = Math.floor(totalFrames / sceneCount);
 
