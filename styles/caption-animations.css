@@ -1,0 +1,49 @@
+/* ========================================
+   CAPTION STYLE ANIMATIONS
+   Reusable keyframes for caption previews.
+   ======================================== */
+
+/* 1. Pop — scale from 0 to overshoot then settle */
+@keyframes captionPop {
+  0%   { opacity: 0; transform: scale(0); }
+  60%  { opacity: 1; transform: scale(1.25); }
+  80%  { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* 2. Karaoke — slide-in from left with color fill */
+@keyframes captionKaraoke {
+  0%   { opacity: 0; transform: translateX(-20px) scale(0.8); }
+  50%  { opacity: 1; transform: translateX(4px) scale(1.05); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* 3. Bounce — drop from above and bounce */
+@keyframes captionBounce {
+  0%   { opacity: 0; transform: translateY(40px); }
+  40%  { opacity: 1; transform: translateY(-10px); }
+  60%  { transform: translateY(5px); }
+  80%  { transform: translateY(-3px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* 4. Glow — fade in with pulsing glow */
+@keyframes captionGlow {
+  0%   { opacity: 0; filter: blur(8px); }
+  50%  { opacity: 0.8; filter: blur(2px); }
+  100% { opacity: 1; filter: blur(0); }
+}
+
+/* 5. Typewriter — snap in with a slight shift */
+@keyframes captionTypewriter {
+  0%   { opacity: 0; transform: translateY(4px); }
+  50%  { opacity: 0.5; }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* 6. Wave — wave/ripple from below with rotation */
+@keyframes captionWave {
+  0%   { opacity: 0; transform: translateY(30px) rotate(-8deg); }
+  50%  { opacity: 1; transform: translateY(-5px) rotate(2deg); }
+  100% { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
