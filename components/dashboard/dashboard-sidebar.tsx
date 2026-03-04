@@ -26,7 +26,7 @@ const menuItems = [
 
 const footerItems = [
     { name: "Upgrade", icon: Zap, href: "/dashboard/upgrade" },
-    { name: "Profile setting", icon: User, href: "/dashboard/profile" },
+    { name: "Profile setting", icon: User, href: "/dashboard/settings" },
 ];
 
 export function DashboardSidebar() {

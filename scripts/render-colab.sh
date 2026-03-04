@@ -30,11 +30,17 @@ then
     apt-get install -y nodejs
 fi
 
-# 3. Clone Repository (User should ideally do this or we can guide them)
-# if [ ! -d "visioncraft" ]; then
-#   git clone <YOUR_REPO_URL>
-#   cd visioncraft
-# fi
+# 3. Handle Repository Directory
+if [[ "$PWD" == *"/visioncraft" ]]; then
+    echo "Already inside visioncraft directory."
+elif [ -d "visioncraft" ]; then
+    echo "VisionCraft directory found. Navigating into it..."
+    cd visioncraft
+else
+    echo "VisionCraft directory not found. Please ensure you are in the correct directory or clone it."
+    # git clone <YOUR_REPO_URL>
+    # cd visioncraft
+fi
 
 # 4. Install NPM Dependencies
 npm install

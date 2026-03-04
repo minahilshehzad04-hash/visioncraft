@@ -4,6 +4,7 @@ import path from "path";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import fs from "fs";
+import { Inngest } from "inngest";
 
 dotenv.config({ path: ".env.local" });
 
@@ -18,6 +19,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const isWatchMode = process.argv.includes("--watch");
+const inngest = new Inngest({ id: "visioncraft" });
 
 async function uploadToSupabase(filePath, fileName) {
     console.log(`\n📤 Uploading ${fileName} to Supabase Storage...`);
@@ -46,7 +48,7 @@ async function renderNextVideo() {
     const { data: video, error } = await supabase
         .from("generated_videos")
         .select("*, video_series(*)")
-        .or(`status.eq.ready_for_local_render,and(status.eq.completed,video_url.is.null)`)
+        .or(`status.eq.ready_for_local_render,and(status.eq.completed,or(video_url.is.null,video_url.like./renders/%))`)
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
@@ -76,28 +78,32 @@ async function renderNextVideo() {
         durationInSeconds: Number(video.video_series?.duration) || 30,
     };
 
-    console.log("📦 Bundling video...");
-    const bundleLocation = await bundle({ entryPoint: entry });
+    // Check if local render already exists to avoid re-rendering
+    if (fs.existsSync(outputLocation)) {
+        console.log(`✨ Local render found for ${video.title}. Skipping render and proceeding to upload.`);
+    } else {
+        console.log("📦 Bundling video...");
+        const bundleLocation = await bundle({ entryPoint: entry });
 
-    const composition = await selectComposition({
-        serveUrl: bundleLocation,
-        id: compositionId,
-        inputProps,
-    });
+        const composition = await selectComposition({
+            serveUrl: bundleLocation,
+            id: compositionId,
+            inputProps,
+        });
 
-    console.log("🎥 Rendering...");
-    await renderMedia({
-        composition,
-        serveUrl: bundleLocation,
-        codec: "h264",
-        outputLocation,
-        inputProps,
-        onProgress: ({ progress }) => {
-            process.stdout.write(`\r⏳ Progress: ${(progress * 100).toFixed(1)}%`);
-        },
-    });
-
-    console.log(`\n✅ Render completed: ${outputLocation}`);
+        console.log("🎥 Rendering...");
+        await renderMedia({
+            composition,
+            serveUrl: bundleLocation,
+            codec: "h264",
+            outputLocation,
+            inputProps,
+            onProgress: ({ progress }) => {
+                process.stdout.write(`\r⏳ Progress: ${(progress * 100).toFixed(1)}%`);
+            },
+        });
+        console.log(`\n✅ Render completed: ${outputLocation}`);
+    }
 
     // 2. Upload to Supabase Storage
     let videoUrl = `/renders/${outputFileName}`; // Fallback to local
@@ -126,6 +132,24 @@ async function renderNextVideo() {
         console.error("❌ Failed to update database:", updateError.message);
     } else {
         console.log("🚀 Updated video status to 'completed'.");
+
+        // 4. Trigger Video Rendered event for notification
+        try {
+            console.log(`📡 Sending 'video/rendered' event for ID: ${video.id} to trigger Plunk email...`);
+            const eventData = {
+                videoId: video.id,
+                userId: video.video_series?.user_id || video.user_id,
+            };
+            console.log("📊 Event data:", JSON.stringify(eventData, null, 2));
+
+            await inngest.send({
+                name: "video/rendered",
+                data: eventData
+            });
+            console.log("✅ Successfully triggered Inngest notification workflow.");
+        } catch (eventError) {
+            console.error("⚠️ Failed to trigger notification event:", eventError.message);
+        }
     }
 
     return true;

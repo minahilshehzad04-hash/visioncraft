@@ -12,8 +12,12 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSeriesById, updateSeries } from "@/actions/series";
+import { useUser } from "@clerk/nextjs";
+import { UpgradeDialog } from "@/components/dashboard/upgrade-dialog";
+import { getUserPlan } from "@/lib/plans";
 
 function CreateVideoForm() {
+    const { user, isLoaded: isUserLoaded } = useUser();
     const router = useRouter();
     const searchParams = useSearchParams();
     const seriesId = searchParams.get("id");
@@ -21,6 +25,10 @@ function CreateVideoForm() {
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(!!seriesId);
+    const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+    const [upgradeTitle, setUpgradeTitle] = useState("");
+    const [upgradeDesc, setUpgradeDesc] = useState("");
+    const [planNeeded, setPlanNeeded] = useState<"Basic" | "Advanced">("Basic");
     const [formData, setFormData] = useState({
         niche: "",
         language: "",
@@ -115,8 +123,29 @@ function CreateVideoForm() {
                 });
 
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || "Failed to schedule series");
+                    const errorData = await response.json();
+
+                    if (errorData.code === "LIMIT_REACHED") {
+                        const currentPlan = getUserPlan(user);
+                        setPlanNeeded(currentPlan === "free" ? "Basic" : "Advanced");
+                        setUpgradeTitle("Series Limit Reached");
+                        setUpgradeDesc(`You've reached the ${errorData.limit} series limit of your ${currentPlan} plan. Upgrade to create more!`);
+                        setIsUpgradeOpen(true);
+                        setIsSubmitting(false);
+                        return;
+                    }
+
+                    if (errorData.code === "PLATFORM_RESTRICTED") {
+                        const currentPlan = getUserPlan(user);
+                        setPlanNeeded(finalData.platform === "youtube" ? "Basic" : "Advanced");
+                        setUpgradeTitle("Platform Restricted");
+                        setUpgradeDesc(errorData.error);
+                        setIsUpgradeOpen(true);
+                        setIsSubmitting(false);
+                        return;
+                    }
+
+                    throw new Error(errorData.error || "Failed to schedule series");
                 }
                 toast.success("Series scheduled successfully!");
             }
@@ -133,17 +162,24 @@ function CreateVideoForm() {
         }
     };
 
-    if (isLoading) {
+    if (isLoading || !isUserLoaded) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
                 <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
-                <p className="text-gray-500 font-medium">Loading series details...</p>
+                <p className="text-gray-500 font-medium">Loading...</p>
             </div>
         );
     }
 
     return (
         <div className="max-w-5xl mx-auto py-8">
+            <UpgradeDialog
+                isOpen={isUpgradeOpen}
+                onOpenChange={setIsUpgradeOpen}
+                title={upgradeTitle}
+                description={upgradeDesc}
+                planNeeded={planNeeded}
+            />
             {/* Stepper Header */}
             <div className="mb-12">
                 <FormStepper currentStep={step} />

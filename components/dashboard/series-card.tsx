@@ -165,6 +165,23 @@ export function SeriesCard({
                         Generate Video
                         <ChevronRight className="ml-auto h-4 w-4 opacity-40 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
                     </Button>
+
+                    <Button
+                        variant="outline"
+                        onClick={async () => {
+                            const { testSeriesWorkflow } = await import("@/actions/video");
+                            const res = await testSeriesWorkflow(series.id);
+                            if (res.success) {
+                                (await import("sonner")).toast.success("Workflow triggered successfully!");
+                            } else {
+                                (await import("sonner")).toast.error(res.error || "Failed to trigger workflow");
+                            }
+                        }}
+                        className="w-full border-dashed border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 text-gray-500 hover:text-blue-600 font-bold py-5 rounded-2xl transition-all"
+                    >
+                        <Play className="mr-2 h-3.5 w-3.5" />
+                        Execute Workflow
+                    </Button>
                 </div>
             </div>
 

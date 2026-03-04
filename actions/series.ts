@@ -128,9 +128,33 @@ export async function requestVideoGeneration(seriesId: string) {
     }
 
     try {
+        const supabase = createServiceRoleClient();
+
+        // 1. Fetch series name for the placeholder
+        const { data: series } = await supabase
+            .from("video_series")
+            .select("series_name")
+            .eq("id", seriesId)
+            .single();
+
+        // 2. Create a placeholder record so it shows up in the UI immediately
+        const videoId = crypto.randomUUID();
+        const { error: insertError } = await supabase.from("generated_videos").insert({
+            id: videoId,
+            series_id: seriesId,
+            title: series?.series_name ? `Creating ${series.series_name}...` : "Generating...",
+            status: "generating",
+        });
+
+        if (insertError) {
+            console.error("Placeholder Insert Error:", insertError);
+            return { success: false, error: insertError.message };
+        }
+
+        // 3. Trigger the heavy lifting via Inngest
         await inngest.send({
             name: "video/generate.requested",
-            data: { seriesId },
+            data: { seriesId, videoId },
             user: { id: userId }
         });
 
