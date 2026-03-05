@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@remotion/renderer", "@remotion/lambda"],
+  serverExternalPackages: ["@remotion/renderer", "@remotion/lambda", "googleapis"],
   images: {
     remotePatterns: [
       {

@@ -154,7 +154,13 @@ Return valid JSON:
 
             // 5. Generate Captions
             const captions = await step.run("generate-captions", async () => {
-                const totalDuration = seriesData.duration * 1000;
+                // Parse duration safely (handles "30-50" or "60")
+                const durationParts = String(seriesData.duration).split("-").map(d => parseInt(d.trim()));
+                const durationNum = durationParts.length > 1
+                    ? Math.floor((durationParts[0] + durationParts[1]) / 2)
+                    : (durationParts[0] || 30);
+
+                const totalDuration = durationNum * 1000;
                 const sceneDuration = totalDuration / scriptData.scenes.length;
                 return scriptData.scenes.map((scene: any, i: number) => ({
                     text: scene.text,

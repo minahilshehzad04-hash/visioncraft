@@ -32,7 +32,9 @@ export default async function DashboardPage() {
                 </div>
                 <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm hover:shadow-md transition-shadow">
                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Videos Generated</h3>
-                    <p className="text-4xl font-black text-gray-900">0</p>
+                    <p className="text-4xl font-black text-gray-900">
+                        {initialSeries.reduce((acc, s) => acc + (s.video_count || 0), 0)}
+                    </p>
                 </div>
                 <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm hover:shadow-md transition-shadow">
                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Credits Remaining</h3>

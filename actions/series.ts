@@ -15,7 +15,7 @@ export async function getSeries() {
 
     const { data, error } = await supabase
         .from("video_series")
-        .select("*")
+        .select("*, generated_videos(count)")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
@@ -24,7 +24,12 @@ export async function getSeries() {
         return { success: false, error: error.message };
     }
 
-    return { success: true, data };
+    const dataWithCounts = data.map((s: any) => ({
+        ...s,
+        video_count: s.generated_videos?.[0]?.count || 0
+    }));
+
+    return { success: true, data: dataWithCounts };
 }
 
 export async function getSeriesById(id: string) {

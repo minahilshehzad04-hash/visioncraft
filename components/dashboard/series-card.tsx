@@ -34,6 +34,7 @@ interface SeriesCardProps {
         created_at: string;
         platform: string;
         publish_time: string;
+        video_count?: number;
     };
     onEdit?: (id: string) => void;
     onDelete?: (id: string) => void;
@@ -146,7 +147,7 @@ export function SeriesCard({
                     <div className="flex items-center justify-between text-sm text-gray-500 font-medium px-1">
                         <div className="flex items-center gap-2">
                             <Video className="h-4 w-4 text-blue-500/60" />
-                            <span>0 Videos</span>
+                            <span>{series.video_count || 0} {series.video_count === 1 ? 'Video' : 'Videos'}</span>
                         </div>
                         <button className="flex items-center gap-1.5 text-blue-600 hover:underline">
                             View all
