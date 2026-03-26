@@ -73,21 +73,23 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
     captionStyleId,
     durationInSeconds,
 }) => {
-    const { fps } = useVideoConfig();
-    const safeDuration = Number(durationInSeconds) || 30;
-    const totalFrames = Math.ceil(safeDuration * fps);
+    const { fps, durationInFrames } = useVideoConfig();
+    const totalFrames = durationInFrames;
     const sceneCount = images.length;
     const framesPerScene = Math.floor(totalFrames / sceneCount);
 
     return (
         <AbsoluteFill style={{ backgroundColor: "#000" }}>
-            {/* Image Sequences */}
+            {/* Image Sequences mapped to Caption timings */}
             {images.map((src, index) => {
-                const from = index * framesPerScene;
-                const dur =
-                    index === sceneCount - 1
-                        ? totalFrames - from // Last scene gets remaining frames
-                        : framesPerScene;
+                const caption = captions[index];
+                if (!caption) return null;
+
+                const fromMs = Number(caption.start);
+                const endMs = Number(caption.end);
+                
+                const from = Math.floor((fromMs / 1000) * fps);
+                const dur = Math.ceil(((endMs - fromMs) / 1000) * fps);
 
                 return (
                     <Sequence key={index} from={from} durationInFrames={dur}>

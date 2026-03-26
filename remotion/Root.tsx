@@ -24,6 +24,16 @@ export const RemotionRoot: React.FC = () => {
                 }}
                 calculateMetadata={({ props }) => {
                     const p = props as unknown as VideoCompositionProps;
+                    
+                    // If we have captions, use the end of the last one as the duration
+                    if (p.captions && p.captions.length > 0) {
+                        const lastCaption = p.captions[p.captions.length - 1];
+                        const durationInMs = Number(lastCaption.end) || (Number(p.durationInSeconds) * 1000);
+                        return {
+                            durationInFrames: Math.ceil((durationInMs / 1000) * FPS),
+                        };
+                    }
+
                     const durationInSeconds = Number(p.durationInSeconds) || 30;
                     return {
                         durationInFrames: Math.ceil(durationInSeconds * FPS),

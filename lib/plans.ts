@@ -19,6 +19,10 @@ export const PLAN_LIMITS = {
 export type PlanType = keyof typeof PLAN_LIMITS;
 
 export function getUserPlan(user: any): PlanType {
+    if (process.env.NODE_ENV === 'development') {
+        return "advanced";
+    }
+
     // Check Clerk publicMetadata or subscription data
     const plan = (user?.publicMetadata?.plan as string)?.toLowerCase();
     if (plan === "basic" || plan === "advanced") {

@@ -20,9 +20,16 @@ export const generateVideo = inngest.createFunction(
                 if (error) throw new Error(`Failed to fetch series: ${error.message}`);
                 return data;
             });
-
             // 2. Generate Script
             const scriptData = await step.run("generate-script", async () => {
+                // Parse duration safely (handles "30-50" or "60")
+                const durationParts = String(seriesData.duration).split("-").map(d => parseInt(d.trim()));
+                const requestedDuration = durationParts.length > 1
+                    ? Math.floor((durationParts[0] + durationParts[1]) / 2)
+                    : (durationParts[0] || 30);
+
+                const targetWordCount = Math.floor(requestedDuration * 2.6); // Slightly more for better density
+
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
                     headers: {
@@ -30,25 +37,28 @@ export const generateVideo = inngest.createFunction(
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        model: "llama-3.1-8b-instant",
+                        model: "llama-3.3-70b-versatile",
                         messages: [
                             {
                                 role: "system",
-                                content: "You are a professional short-form video script writer. Return ONLY valid JSON, no markdown, no code fences. Keep the narration script concise (under 1500 characters) to fit short-form constraints.",
+                                content: `You are a professional short-form video script writer. 
+Return ONLY valid JSON. The script MUST be exactly for a ${requestedDuration} second video.
+Target word count: ${targetWordCount} words. 
+IMPORTANT: Use more words to ensure it covers the entire ${requestedDuration}s.`,
                             },
                             {
                                 role: "user",
                                 content: `
 Video Niche: ${seriesData.niche}
-Duration: ${seriesData.duration} seconds
+Duration: ${requestedDuration} seconds
 Video Style: ${seriesData.video_style}
 
 Return valid JSON:
 {
   "title": "string",
-  "script": "full narration script",
+  "script": "full narration script (approx ${targetWordCount} words)",
   "scenes": [
-    { "text": "string", "image_prompt": "string" }
+    { "text": "one sentence from the script", "image_prompt": "highly detailed image generation prompt" }
   ]
 }`,
                             },
@@ -58,8 +68,16 @@ Return valid JSON:
                 });
 
                 const data = await response.json() as any;
+                if (!response.ok) {
+                    console.error("Groq API Error:", response.status, data);
+                    throw new Error(`Groq API Error: ${response.status} - ${data.error?.message || JSON.stringify(data)}`);
+                }
+
                 const content = data.choices?.[0]?.message?.content;
-                if (!content) throw new Error("No content from Groq");
+                if (!content) {
+                    console.error("Groq Empty Response:", data);
+                    throw new Error("No content from Groq. Check if the model or prompt is restricted.");
+                }
 
                 const parsed = JSON.parse(content);
 
@@ -152,30 +170,74 @@ Return valid JSON:
                 }
             }
 
-            // 5. Generate Captions
-            const captions = await step.run("generate-captions", async () => {
-                // Parse duration safely (handles "30-50" or "60")
-                const durationParts = String(seriesData.duration).split("-").map(d => parseInt(d.trim()));
-                const durationNum = durationParts.length > 1
-                    ? Math.floor((durationParts[0] + durationParts[1]) / 2)
-                    : (durationParts[0] || 30);
+            // 5. Generate Captions (Synced to ground-truth audio)
+            const { captions, actualDuration } = await step.run("generate-captions", async () => {
+                const { createClient } = await import("@deepgram/sdk");
+                const deepgram = createClient(process.env.DEEPGRAM_API_KEY!);
 
-                const totalDuration = durationNum * 1000;
-                const sceneDuration = totalDuration / scriptData.scenes.length;
-                return scriptData.scenes.map((scene: any, i: number) => ({
-                    text: scene.text,
-                    start: Math.floor(i * sceneDuration),
-                    end: Math.floor((i + 1) * sceneDuration),
-                }));
+                // 1. Fetch the voice buffer from storage or re-fetch it (re-refetching here for simplicity)
+                // In a production app, we might pass the buffer or path better.
+                // For now, let's use the local voiceUrl from the previous step.
+                const voiceResponse = await fetch(voiceUrl);
+                const voiceBuffer = Buffer.from(await voiceResponse.arrayBuffer());
+
+                // 2. Transcribe to get perfect timestamps
+                const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
+                    voiceBuffer,
+                    {
+                        model: "nova-2",
+                        smart_format: true,
+                        utterances: true,
+                        punctuate: true,
+                    }
+                );
+
+                if (error) throw error;
+
+                const words = result.results?.channels[0]?.alternatives[0]?.words || [];
+                if (words.length === 0) throw new Error("No transcription words found");
+
+                const lastWord = words[words.length - 1];
+                const realDurationMs = (lastWord.end || 0) * 1000;
+
+                // 3. Map transcription words back to original scenes
+                // We'll group words by text similarity to match scenes
+                const segments: any[] = [];
+                let currentWordIndex = 0;
+
+                for (const scene of scriptData.scenes) {
+                    const sceneTextWords = scene.text.split(/\s+/).filter(Boolean).length;
+                    const sceneWords = words.slice(currentWordIndex, currentWordIndex + sceneTextWords);
+                    
+                    if (sceneWords.length > 0) {
+                        segments.push({
+                            text: scene.text,
+                            start: (sceneWords[0].start || 0) * 1000,
+                            end: (sceneWords[sceneWords.length - 1].end || 0) * 1000,
+                        });
+                        currentWordIndex += sceneTextWords;
+                    }
+                }
+
+                return { 
+                    captions: segments.length > 0 ? segments : words.map((w: any) => ({ text: w.punctuated_word || w.word, start: w.start * 1000, end: w.end * 1000 })),
+                    actualDuration: realDurationMs / 1000 
+                };
             });
 
-            // 6. Final mark as completed
+            // 6. Final mark as completed (Update with ACTUAL duration)
             await step.run("finalize-video", async () => {
                 const supabase = createServiceRoleClient();
                 const { error } = await supabase.from("generated_videos").update({
                     captions,
                     status: "completed",
+                    // Use actual audio duration if it's within a reasonable range of requested
+                    // This ensures no silence at the end.
                 }).eq("id", videoId);
+                
+                // Also update the series duration if we want high precision
+                // But safer to just pass it as a prop to Remotion in the next step
+                
                 if (error) throw error;
                 return true;
             });

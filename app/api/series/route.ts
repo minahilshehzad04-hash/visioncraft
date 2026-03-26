@@ -39,6 +39,10 @@ export async function POST(req: Request) {
         const plan = getUserPlan(user);
         const limits = PLAN_LIMITS[plan];
 
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`[DEV] Plan: ${plan}, Max Series Limit: ${limits.maxSeries}`);
+        }
+
         // 1. Check Series Count
         const { count, error: countError } = await supabase
             .from("video_series")

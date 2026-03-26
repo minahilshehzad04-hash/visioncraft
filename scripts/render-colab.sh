@@ -31,19 +31,23 @@ then
 fi
 
 # 3. Handle Repository Directory
-if [[ "$PWD" == *"/visioncraft" ]]; then
+if [ -d "visioncraft/visioncraft" ]; then
+    echo "Double-nested VisionCraft directory found. Navigating into it..."
+    cd visioncraft/visioncraft
+elif [[ "$PWD" == *"/visioncraft/visioncraft" ]]; then
+    echo "Already inside nested visioncraft directory."
+elif [[ "$PWD" == *"/visioncraft" ]]; then
     echo "Already inside visioncraft directory."
 elif [ -d "visioncraft" ]; then
     echo "VisionCraft directory found. Navigating into it..."
     cd visioncraft
 else
     echo "VisionCraft directory not found. Please ensure you are in the correct directory or clone it."
-    # git clone <YOUR_REPO_URL>
-    # cd visioncraft
 fi
 
 # 4. Install NPM Dependencies
 npm install
+npm install @remotion/compositor-linux-x64-gnu
 
 # 5. Start the Automated Watcher
 echo "👀 Starting the Render Watcher..."
