@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CalendarClock, Clock, Film, Globe, Sparkles, ChevronDown, Loader2 } from "lucide-react";
@@ -18,6 +18,11 @@ const durations = [
 ];
 
 interface SeriesDetailsProps {
+    initialData?: {
+        seriesName?: string;
+        duration?: string;
+        platform?: string;
+    };
     onSchedule: (details: {
         seriesName: string;
         duration: string;
@@ -28,11 +33,17 @@ interface SeriesDetailsProps {
     isSubmitting?: boolean;
 }
 
-export function SeriesDetails({ onSchedule, onBack, isSubmitting }: SeriesDetailsProps) {
-    const [seriesName, setSeriesName] = useState("");
-    const [duration, setDuration] = useState("");
-    const [platform, setPlatform] = useState("");
+export function SeriesDetails({ onSchedule, onBack, isSubmitting, initialData }: SeriesDetailsProps) {
+    const [seriesName, setSeriesName] = useState(initialData?.seriesName || "");
+    const [duration, setDuration] = useState(initialData?.duration || "");
+    const [platform, setPlatform] = useState(initialData?.platform || "");
     const [publishTime, setPublishTime] = useState("");
+
+    useEffect(() => {
+        if (initialData?.seriesName) setSeriesName(initialData.seriesName);
+        if (initialData?.duration) setDuration(initialData.duration);
+        if (initialData?.platform) setPlatform(initialData.platform);
+    }, [initialData]);
 
     const isValid = seriesName.trim() && duration && platform && publishTime;
 

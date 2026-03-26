@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Ghost, Brain, Sun, Sparkles, BookOpen, Smile, Cpu, ChefHat, Dumbbell, Landmark } from "lucide-react";
+import { ArrowRight, Ghost, Brain, Sun, Sparkles, BookOpen, Smile, Cpu, ChefHat, Dumbbell, Landmark, Wand2 } from "lucide-react";
+import { MagicPrompt } from "./magic-prompt";
 
 interface Niche {
     id: string;
@@ -27,10 +28,12 @@ const availableNiches: Niche[] = [
 
 interface NicheSelectionProps {
     onContinue: (niche: string) => void;
+    onMagicComplete?: (config: any) => void;
+    defaultTab?: "available" | "custom" | "magic";
 }
 
-export function NicheSelection({ onContinue }: NicheSelectionProps) {
-    const [activeTab, setActiveTab] = useState<"available" | "custom">("available");
+export function NicheSelection({ onContinue, onMagicComplete, defaultTab = "available" }: NicheSelectionProps) {
+    const [activeTab, setActiveTab] = useState<"available" | "custom" | "magic">(defaultTab);
     const [selectedNiche, setSelectedNiche] = useState<string | null>(null);
     const [customNiche, setCustomNiche] = useState("");
 
@@ -77,6 +80,18 @@ export function NicheSelection({ onContinue }: NicheSelectionProps) {
                 >
                     Custom Niche
                 </button>
+                <button
+                    onClick={() => setActiveTab("magic")}
+                    className={cn(
+                        "px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2",
+                        activeTab === "magic"
+                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100"
+                            : "text-indigo-600 hover:bg-indigo-50"
+                    )}
+                >
+                    <Wand2 className="h-4 w-4" />
+                    AI Magic
+                </button>
             </div>
 
             {/* Content */}
@@ -115,7 +130,7 @@ export function NicheSelection({ onContinue }: NicheSelectionProps) {
                         })}
                     </div>
                 </div>
-            ) : (
+            ) : activeTab === "custom" ? (
                 <div className="h-[400px] flex flex-col p-8 bg-white border border-gray-200 rounded-xl shadow-sm text-left">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
@@ -134,19 +149,23 @@ export function NicheSelection({ onContinue }: NicheSelectionProps) {
                         className="flex-1 w-full p-4 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
                     />
                 </div>
+            ) : (
+                <MagicPrompt onMagicComplete={onMagicComplete || (() => { })} />
             )}
 
             {/* Actions */}
-            <div className="mt-12 flex justify-end">
-                <Button
-                    disabled={isContinueDisabled}
-                    onClick={handleContinue}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-xl text-lg font-bold group"
-                >
-                    Continue
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-            </div>
+            {activeTab !== "magic" && (
+                <div className="mt-12 flex justify-end">
+                    <Button
+                        disabled={isContinueDisabled}
+                        onClick={handleContinue}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-xl text-lg font-bold group"
+                    >
+                        Continue
+                        <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,5 +1,5 @@
 import { SeriesList } from "@/components/dashboard/series-list";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getSeries } from "@/actions/series";
@@ -14,12 +14,20 @@ export default async function DashboardPage() {
                     <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Your Series</h1>
                     <p className="text-gray-500 font-medium mt-1">Manage and monitor your automated video content.</p>
                 </div>
-                <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-6 rounded-2xl shadow-xl shadow-blue-100 transition-all hover:scale-105 active:scale-95 group">
-                    <Link href="/dashboard/create" className="flex items-center gap-2">
-                        <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform" />
-                        Create New Series
-                    </Link>
-                </Button>
+                <div className="flex flex-wrap items-center gap-4">
+                    <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold px-6 py-6 rounded-2xl shadow-xl shadow-indigo-100 transition-all hover:scale-105 active:scale-95 group border-0">
+                        <Link href="/dashboard/create?mode=magic" className="flex items-center gap-2">
+                            <Sparkles className="h-5 w-5 group-hover:animate-pulse" />
+                            AI Prompt to Video
+                        </Link>
+                    </Button>
+                    <Button asChild variant="outline" className="bg-white hover:bg-gray-50 text-gray-900 border-gray-200 font-bold px-6 py-6 rounded-2xl shadow-sm transition-all hover:scale-105 active:scale-95 group">
+                        <Link href="/dashboard/create" className="flex items-center gap-2">
+                            <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform" />
+                            Create New Series
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <SeriesList initialSeries={initialSeries} />

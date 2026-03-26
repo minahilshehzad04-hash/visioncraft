@@ -21,6 +21,7 @@ function CreateVideoForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const seriesId = searchParams.get("id");
+    const mode = searchParams.get("mode");
 
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -162,6 +163,22 @@ function CreateVideoForm() {
         }
     };
 
+    const handleMagicComplete = (config: any) => {
+        setFormData((prev) => ({
+            ...prev,
+            niche: config.niche,
+            videoStyle: config.videoStyle,
+            language: config.language,
+            duration: config.duration,
+            captionStyle: config.captionStyle,
+            seriesName: config.seriesName,
+            platform: config.platform,
+            musicIds: config.musicIds || [],
+        }));
+        // Jump to the last step for review
+        setStep(6);
+    };
+
     if (isLoading || !isUserLoaded) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -189,7 +206,9 @@ function CreateVideoForm() {
             <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm min-h-[600px] flex flex-col">
                 {step === 1 && (
                     <NicheSelection
+                        defaultTab={(mode === "magic" ? "magic" : "available") as "available" | "custom" | "magic"}
                         onContinue={(niche) => handleNext({ niche })}
+                        onMagicComplete={handleMagicComplete}
                     />
                 )}
 
@@ -223,6 +242,11 @@ function CreateVideoForm() {
 
                 {step === 6 && (
                     <SeriesDetails
+                        initialData={{
+                            seriesName: formData.seriesName,
+                            duration: formData.duration,
+                            platform: formData.platform,
+                        }}
                         onBack={handleBack}
                         onSchedule={handleSchedule}
                         isSubmitting={isSubmitting}
