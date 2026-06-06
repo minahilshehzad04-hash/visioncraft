@@ -112,7 +112,6 @@ export const processScheduledSeries = inngest.createFunction(
             event: "video/rendered",
             timeout: "30m",
             match: "data.videoId",
-            if: `async (event, { data }) => event.data.videoId === "${video.id}"`
         });
 
         // 5. Wait until specific Publish Time
