@@ -159,8 +159,7 @@ export async function requestVideoGeneration(seriesId: string) {
         // 3. Trigger the heavy lifting via Inngest
         await inngest.send({
             name: "video/generate.requested",
-            data: { seriesId, videoId },
-            user: { id: userId }
+            data: { seriesId, videoId }
         });
 
         return { success: true };
