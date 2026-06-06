@@ -6,6 +6,8 @@ export const proxy = clerkMiddleware(async (auth, request) => {
     const isPublic =
         nextUrl.pathname === '/' ||
         nextUrl.pathname.startsWith('/api/inngest') ||
+        nextUrl.pathname.startsWith('/api/webhooks') ||
+        nextUrl.pathname.startsWith('/api/auth') ||
         nextUrl.pathname.startsWith('/sign-in') ||
         nextUrl.pathname.startsWith('/sign-up');
 
