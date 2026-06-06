@@ -18,7 +18,7 @@ async function testResilience() {
         } else {
             console.error("FAILURE: Returned buffer is empty");
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Verification Script Error:", error.message);
     }
 }
