@@ -1,4 +1,4 @@
-import { generateResilientImage } from "../lib/video/image-gen.ts";
+import { generateResilientImage } from "../lib/video/image-gen";
 import dotenv from "dotenv";
 import fs from "fs";
 

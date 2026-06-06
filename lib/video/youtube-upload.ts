@@ -84,10 +84,10 @@ export async function publishToYouTube(videoId: string) {
     if (!response.ok) throw new Error(`Failed to download video from ${video.video_url}`);
 
     const fileStream = fs.createWriteStream(tempFilePath);
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
         response.body!.pipe(fileStream);
         response.body!.on("error", reject);
-        fileStream.on("finish", resolve);
+        fileStream.on("finish", () => resolve());
     });
 
     try {
