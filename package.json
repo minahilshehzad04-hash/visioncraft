@@ -12,12 +12,15 @@
     "remotion:watch": "node scripts/render-local.mjs --watch"
   },
   "dependencies": {
+    "@aws-sdk/client-sso-oidc": "^3.1063.0",
     "@base-ui/react": "^1.2.0",
     "@clerk/nextjs": "^6.38.0",
     "@deepgram/sdk": "^4.11.3",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.2",
+    "@opentelemetry/core": "^2.7.1",
     "@plunk/node": "^3.0.3",
+    "@remotion/bundler": "^4.0.242",
     "@remotion/cli": "4.0.242",
     "@remotion/lambda": "4.0.242",
     "@remotion/player": "4.0.242",
